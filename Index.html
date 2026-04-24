@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Datakaan HIS — Sistema de Gestión Hospitalaria</title>
+
+<!-- ═══ CDN LIBS ═══ -->
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js" defer></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- ═══ FONTS ═══ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        navy:  { 50:'#e8f0fb', 100:'#c5d9f3', 200:'#9cbce9', 300:'#6d9bdd', 400:'#4480d4', 500:'#1a64c8', 600:'#0f4ea3', 700:'#002D5A', 800:'#001e3d', 900:'#001020' },
+        mint:  { 50:'#e6fff5', 100:'#b3ffe0', 200:'#66ffc2', 300:'#00e68a', 400:'#00cc7a', 500:'#00b36b', 600:'#00994d', 700:'#006633', 800:'#004d26', 900:'#00331a' },
+        coral: { 50:'#fff5f2', 100:'#ffe0d9', 200:'#ffc2b3', 300:'#ff9e85', 400:'#ff7a57', 500:'#ff5733', 600:'#e64328', 700:'#b3301d', 800:'#802213', 900:'#4d140b' },
+      },
+      fontFamily: {
+        display: ['Outfit', 'sans-serif'],
+        body:    ['Plus Jakarta Sans', 'sans-serif'],
+      },
+    }
+  }
+}
+</script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; }
+
+  /* ═══ APPLE SPINNER ═══ */
+  .apple-spinner { position: relative; width: 24px; height: 24px; }
+  .apple-bar {
+    position: absolute; left: 50%; top: 50%;
+    width: 2.5px; height: 7px;
+    margin-left: -1.25px; margin-top: -12px;
+    background: rgba(255,255,255,0.85);
+    border-radius: 999px;
+    transform-origin: bottom center;
+    animation: barPulse 1.2s linear infinite;
+  }
+  @keyframes barPulse { 0%{opacity:0.12} 50%{opacity:1} 100%{opacity:0.12} }
+  .apple-bar:nth-child(1)  { transform: rotate(0deg)   translateY(-3px); animation-delay:0.0s }
+  .apple-bar:nth-child(2)  { transform: rotate(30deg)  translateY(-3px); animation-delay:0.1s }
+  .apple-bar:nth-child(3)  { transform: rotate(60deg)  translateY(-3px); animation-delay:0.2s }
+  .apple-bar:nth-child(4)  { transform: rotate(90deg)  translateY(-3px); animation-delay:0.3s }
+  .apple-bar:nth-child(5)  { transform: rotate(120deg) translateY(-3px); animation-delay:0.4s }
+  .apple-bar:nth-child(6)  { transform: rotate(150deg) translateY(-3px); animation-delay:0.5s }
+  .apple-bar:nth-child(7)  { transform: rotate(180deg) translateY(-3px); animation-delay:0.6s }
+  .apple-bar:nth-child(8)  { transform: rotate(210deg) translateY(-3px); animation-delay:0.7s }
+  .apple-bar:nth-child(9)  { transform: rotate(240deg) translateY(-3px); animation-delay:0.8s }
+  .apple-bar:nth-child(10) { transform: rotate(270deg) translateY(-3px); animation-delay:0.9s }
+  .apple-bar:nth-child(11) { transform: rotate(300deg) translateY(-3px); animation-delay:1.0s }
+  .apple-bar:nth-child(12) { transform: rotate(330deg) translateY(-3px); animation-delay:1.1s }
+
+  /* ═══ PROGRESS BAR ═══ */
+  .progress-track {
+    width: 200px; height: 3px; border-radius: 999px;
+    background: rgba(255,255,255,0.15); overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.6), rgba(255,255,255,0.95));
+    animation: fillBar 2.2s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+  @keyframes fillBar { 0%{width:0} 100%{width:100%} }
+
+  /* ═══ GLASS MORPH ═══ */
+  .glass-card {
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 20px 60px -20px rgba(0,20,60,0.4), inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+
+  /* ═══ FADE TRANSITIONS ═══ */
+  .fade-enter { animation: fadeSlideUp 0.9s cubic-bezier(0.22,1,0.36,1) forwards; }
+  .fade-exit  { animation: fadeSlideDown 0.7s cubic-bezier(0.22,1,0.36,1) forwards; }
+  @keyframes fadeSlideUp   { 0%{opacity:0;transform:translateY(20px);filter:blur(6px)} 100%{opacity:1;transform:translateY(0);filter:blur(0)} }
+  @keyframes fadeSlideDown { 0%{opacity:1;transform:translateY(0);filter:blur(0)} 100%{opacity:0;transform:translateY(-16px);filter:blur(6px)} }
+
+  /* ═══ SIDEBAR ═══ */
+  .sidebar-item {
+    transition: all 0.25s cubic-bezier(0.22,1,0.36,1);
+  }
+  .sidebar-item:hover {
+    background: rgba(0,45,90,0.08);
+    transform: translateX(3px);
+  }
+  .sidebar-active {
+    background: linear-gradient(135deg, #002D5A, #0f4ea3) !important;
+    color: white !important;
+    box-shadow: 0 4px 16px -4px rgba(0,45,90,0.5);
+    transform: translateX(0) !important;
+  }
+
+  /* ═══ STAT CARDS ═══ */
+  .stat-card {
+    transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+  }
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px -8px rgba(0,45,90,0.18);
+  }
+
+  /* ═══ BED MAP ═══ */
+  .bed-cell {
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .bed-cell:hover { transform: scale(1.04); }
+
+  /* ═══ SCROLLBAR ═══ */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #c5d9f3; border-radius: 99px; }
+
+  /* ═══ PAGE TRANSITION ═══ */
+  .page-transition {
+    animation: pageIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+  }
+  @keyframes pageIn { 0%{opacity:0;transform:translateY(12px)} 100%{opacity:1;transform:translateY(0)} }
+
+  /* ═══ WELCOME OVERLAY ═══ */
+  .orb-light {
+    position: absolute; border-radius: 50%; pointer-events: none;
+  }
+
+  /* ═══ TABLE ROWS ═══ */
+  .table-row-hover { transition: background 0.15s ease; }
+  .table-row-hover:hover { background: #f8fafc; }
+</style>
+</head>
+
+<body x-data="hospitalApp()" x-init="startWelcome()">
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║                 WELCOME SEQUENCE                           ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div x-show="showWelcome" x-transition:leave="transition ease-in duration-700" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+     class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+     style="background: radial-gradient(ellipse at 25% 15%, rgba(200,220,245,0.35) 0%, rgba(0,45,90,0.97) 60%, #001020 100%);">
+
+  <!-- Orbes de luz atmosférica -->
+  <div class="orb-light" style="top:-140px;left:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(100,160,255,0.12) 0%,transparent 70%);filter:blur(50px);"></div>
+  <div class="orb-light" style="bottom:-180px;right:-140px;width:650px;height:650px;background:radial-gradient(circle,rgba(0,20,60,0.5) 0%,transparent 70%);filter:blur(60px);"></div>
+  <div class="orb-light" style="top:40%;left:60%;width:300px;height:300px;background:radial-gradient(circle,rgba(0,179,107,0.08) 0%,transparent 70%);filter:blur(40px);"></div>
+
+  <div class="flex flex-col items-center text-center px-6">
+
+    <!-- FASE 1: Datakaan -->
+    <div x-show="welcomeStep === 1"
+         x-transition:enter="fade-enter"
+         x-transition:leave="fade-exit"
+         class="flex flex-col items-center">
+      <div class="glass-card rounded-3xl px-12 py-10">
+        <h1 class="font-display text-5xl md:text-6xl font-bold text-white tracking-tight" style="letter-spacing:-0.04em;">
+          Datakaan Software
+        </h1>
+        <p class="mt-3 text-lg md:text-xl font-light text-blue-200/80 tracking-wide">
+          Te da la bienvenida
+        </p>
+      </div>
+      <div class="mt-8">
+        <div class="apple-spinner">
+          <span class="apple-bar"></span><span class="apple-bar"></span><span class="apple-bar"></span>
+          <span class="apple-bar"></span><span class="apple-bar"></span><span class="apple-bar"></span>
+          <span class="apple-bar"></span><span class="apple-bar"></span><span class="apple-bar"></span>
+          <span class="apple-bar"></span><span class="apple-bar"></span><span class="apple-bar"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FASE 2: Venancio Cruz -->
+    <div x-show="welcomeStep === 2"
+         x-transition:enter="fade-enter"
+         x-transition:leave="fade-exit"
+         class="flex flex-col items-center">
+      <div class="glass-card rounded-3xl px-12 py-10">
+        <h1 class="font-display text-4xl md:text-5xl font-bold text-white tracking-tight" style="letter-spacing:-0.04em;">
+          Bienvenido, Venancio Cruz
+        </h1>
+        <p class="mt-3 text-base md:text-lg font-light text-blue-200/70">
+          Iniciando Sistema de Gestión Hospitalaria...
+        </p>
+      </div>
+      <div class="mt-8">
+        <div class="progress-track">
+          <div class="progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║                 MAIN APPLICATION                           ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div x-show="!showWelcome" x-cloak class="flex min-h-screen">
+
+  <!-- ═══════ SIDEBAR ═══════ -->
+  <aside class="w-64 bg-white border-r border-slate-200/80 flex flex-col fixed inset-y-0 left-0 z-40 shadow-sm">
+
+    <!-- Logo -->
+    <div class="p-6 border-b border-slate-100">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-navy-700 to-navy-500 flex items-center justify-center shadow-lg shadow-navy-700/30">
+          <span class="text-white font-display font-bold text-sm">DK</span>
+        </div>
+        <div>
+          <div class="font-display font-bold text-navy-700 text-sm tracking-tight">Datakaan</div>
+          <div class="text-[10px] text-slate-400 font-medium tracking-wider uppercase">Hospital · HIS</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="flex-1 p-4 space-y-1">
+      <template x-for="item in navItems" :key="item.id">
+        <button @click="currentView = item.id"
+                :class="currentView === item.id ? 'sidebar-active' : 'text-slate-600'"
+                class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium">
+          <i :data-lucide="item.icon" class="w-[18px] h-[18px]"></i>
+          <span x-text="item.label"></span>
+          <span x-show="item.badge" x-text="item.badge"
+                class="ml-auto text-[10px] font-bold bg-coral-100 text-coral-600 px-2 py-0.5 rounded-full"></span>
+        </button>
+      </template>
+    </nav>
+
+    <!-- User -->
+    <div class="p-4 border-t border-slate-100">
+      <div class="flex items-center gap-3 px-3">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-mint-400 to-mint-600 flex items-center justify-center text-white font-display font-bold text-xs shadow-md shadow-mint-400/30">VC</div>
+        <div>
+          <div class="text-xs font-semibold text-navy-700">Dr. Venancio Cruz</div>
+          <div class="text-[10px] text-slate-400">Dir. Médico</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══════ MAIN CONTENT ═══════ -->
+  <div class="ml-64 flex-1 flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-30">
+      <div class="flex items-center justify-between px-8 py-4">
+        <div>
+          <h2 class="font-display font-bold text-navy-700 text-lg" x-text="viewTitle"></h2>
+          <p class="text-xs text-slate-400 mt-0.5" x-text="todayFormatted"></p>
+        </div>
+        <div class="flex items-center gap-4">
+          <button class="relative p-2 rounded-xl hover:bg-slate-100 transition-colors">
+            <i data-lucide="bell" class="w-5 h-5 text-slate-500"></i>
+            <span class="absolute top-1 right-1 w-2 h-2 bg-coral-500 rounded-full ring-2 ring-white"></span>
+          </button>
+          <button class="relative p-2 rounded-xl hover:bg-slate-100 transition-colors">
+            <i data-lucide="settings" class="w-5 h-5 text-slate-500"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Panels -->
+    <main class="flex-1 p-8">
+
+      <!-- ═══ VIEW: DASHBOARD ═══ -->
+      <div x-show="currentView === 'dashboard'" x-transition class="page-transition">
+
+        <!-- Stats -->
+        <div class="grid grid-cols-4 gap-5 mb-8">
+          <template x-for="stat in stats" :key="stat.label">
+            <div class="stat-card bg-white rounded-2xl p-5 border border-slate-200/60">
+              <div class="flex items-center justify-between mb-4">
+                <div class="w-11 h-11 rounded-xl flex items-center justify-center" :style="'background:' + stat.bg">
+                  <i :data-lucide="stat.icon" class="w-5 h-5" :style="'color:' + stat.color"></i>
+                </div>
+                <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                      :class="stat.trend > 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'"
+                      x-text="(stat.trend > 0 ? '↑ +' : '↓ ') + Math.abs(stat.trend) + '%'"></span>
+              </div>
+              <div class="font-display text-3xl font-bold text-navy-700" x-text="stat.value"></div>
+              <div class="text-xs text-slate-400 mt-1 font-medium" x-text="stat.label"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Citas de hoy -->
+        <div class="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="font-display font-bold text-navy-700 text-sm">Citas de hoy</h3>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">8 programadas</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <th class="px-6 py-3">Paciente</th>
+                  <th class="px-6 py-3">Hora</th>
+                  <th class="px-6 py-3">Especialidad</th>
+                  <th class="px-6 py-3">Médico</th>
+                  <th class="px-6 py-3">Estado</th>
+                  <th class="px-6 py-3 text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <template x-for="cita in citas" :key="cita.nombre">
+                  <tr class="table-row-hover">
+                    <td class="px-6 py-3.5">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
+                             :style="'background:' + cita.avatar">
+                          <span x-text="cita.initials"></span>
+                        </div>
+                        <div>
+                          <div class="text-sm font-semibold text-navy-700" x-text="cita.nombre"></div>
+                          <div class="text-[11px] text-slate-400" x-text="'Exp. ' + cita.exp"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-3.5 text-sm font-medium text-slate-600" x-text="cita.hora"></td>
+                    <td class="px-6 py-3.5">
+                      <span class="text-xs font-medium px-2.5 py-1 rounded-lg bg-navy-50 text-navy-600" x-text="cita.especialidad"></span>
+                    </td>
+                    <td class="px-6 py-3.5 text-sm text-slate-500" x-text="cita.medico"></td>
+                    <td class="px-6 py-3.5">
+                      <span class="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                            :class="cita.estado === 'En sala' ? 'bg-amber-50 text-amber-600' : cita.estado === 'Atendido' ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'"
+                            x-text="cita.estado"></span>
+                    </td>
+                    <td class="px-6 py-3.5 text-right">
+                      <button @click="currentView = 'expedientes'"
+                              class="text-xs font-semibold text-navy-600 hover:text-navy-800 bg-navy-50 hover:bg-navy-100 px-3.5 py-1.5 rounded-lg transition-all">
+                        Ver expediente
+                      </button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ VIEW: EXPEDIENTES ═══ -->
+      <div x-show="currentView === 'expedientes'" x-transition class="page-transition">
+
+        <!-- Patient Header Card -->
+        <div class="bg-white rounded-2xl border border-slate-200/60 p-6 mb-6 flex items-center gap-6">
+          <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-navy-600 to-navy-400 flex items-center justify-center text-white font-display font-bold text-xl shadow-lg shadow-navy-600/30">MG</div>
+          <div class="flex-1">
+            <h3 class="font-display font-bold text-xl text-navy-700">María García López</h3>
+            <p class="text-sm text-slate-400 mt-0.5">Exp. #20250134 · F · 47 años · Tipo O+ · Seg. IMSS</p>
+          </div>
+          <div class="flex gap-2">
+            <span class="text-[11px] font-bold px-3 py-1.5 rounded-full bg-green-50 text-green-600">Activa</span>
+            <span class="text-[11px] font-bold px-3 py-1.5 rounded-full bg-navy-50 text-navy-600">Consulta #12</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-5">
+
+          <!-- Col 1: Alergias + Antecedentes -->
+          <div class="space-y-5">
+
+            <!-- Alergias -->
+            <div class="bg-white rounded-2xl border border-red-200/80 p-5">
+              <div class="flex items-center gap-2 mb-4">
+                <div class="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center">
+                  <i data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i>
+                </div>
+                <h4 class="font-display font-bold text-sm text-red-600">Alergias</h4>
+              </div>
+              <div class="space-y-2">
+                <div class="flex items-center gap-2 bg-red-50 rounded-xl px-3 py-2">
+                  <span class="w-2 h-2 rounded-full bg-red-400 flex-shrink-0"></span>
+                  <span class="text-xs font-semibold text-red-700">Penicilina</span>
+                  <span class="ml-auto text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">SEVERA</span>
+                </div>
+                <div class="flex items-center gap-2 bg-amber-50 rounded-xl px-3 py-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
+                  <span class="text-xs font-semibold text-amber-700">Sulfonamidas</span>
+                  <span class="ml-auto text-[10px] font-bold bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">MODERADA</span>
+                </div>
+                <div class="flex items-center gap-2 bg-amber-50 rounded-xl px-3 py-2">
+                  <span class="w-2 h-2 rounded-full bg-amber-400 flex-shrink-0"></span>
+                  <span class="text-xs font-semibold text-amber-700">Látex</span>
+                  <span class="ml-auto text-[10px] font-bold bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">LEVE</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Antecedentes -->
+            <div class="bg-white rounded-2xl border border-slate-200/60 p-5">
+              <div class="flex items-center gap-2 mb-4">
+                <div class="w-8 h-8 rounded-lg bg-navy-50 flex items-center justify-center">
+                  <i data-lucide="file-text" class="w-4 h-4 text-navy-600"></i>
+                </div>
+                <h4 class="font-display font-bold text-sm text-navy-700">Antecedentes</h4>
+              </div>
+              <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
+                <div class="flex gap-3">
+                  <span class="font-semibold text-slate-500 w-24 flex-shrink-0">Familiares:</span>
+                  <span>DM2 (madre), HTA (padre), Ca mama (abuela materna)</span>
+                </div>
+                <div class="flex gap-3">
+                  <span class="font-semibold text-slate-500 w-24 flex-shrink-0">Personales:</span>
+                  <span>Hipotiroidismo dx 2019. Colecistectomía 2021.</span>
+                </div>
+                <div class="flex gap-3">
+                  <span class="font-semibold text-slate-500 w-24 flex-shrink-0">Gineco-Obst:</span>
+                  <span>G2 P2. FUM: 15/03/2025. Pap: 01/2025 normal.</span>
+                </div>
+                <div class="flex gap-3">
+                  <span class="font-semibold text-slate-500 w-24 flex-shrink-0">Quirúrgicos:</span>
+                  <span>Apendicectomía 2008. Colecistectomía lap. 2021.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Col 2: Signos Vitales -->
+          <div class="bg-white rounded-2xl border border-slate-200/60 p-5">
+            <div class="flex items-center gap-2 mb-5">
+              <div class="w-8 h-8 rounded-lg bg-mint-50 flex items-center justify-center">
+                <i data-lucide="heart-pulse" class="w-4 h-4 text-mint-600"></i>
+              </div>
+              <h4 class="font-display font-bold text-sm text-navy-700">Signos vitales</h4>
+              <span class="ml-auto text-[10px] text-slate-400">Hoy 09:15 AM</span>
+            </div>
+            <div class="space-y-4">
+              <template x-for="vital in vitals" :key="vital.label">
+                <div class="flex items-center justify-between py-2.5 border-b border-slate-100 last:border-0">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center" :style="'background:' + vital.bg">
+                      <i :data-lucide="vital.icon" class="w-4 h-4" :style="'color:' + vital.color"></i>
+                    </div>
+                    <div>
+                      <div class="text-xs font-semibold text-navy-700" x-text="vital.label"></div>
+                      <div class="text-[10px] text-slate-400" x-text="vital.unit"></div>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="font-display text-lg font-bold" :style="'color:' + vital.valueColor" x-text="vital.value"></div>
+                    <div class="text-[10px] font-medium" :class="vital.status === 'Normal' ? 'text-green-500' : 'text-amber-500'" x-text="vital.status"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Col 3: Nota Médica SOAP -->
+          <div class="bg-white rounded-2xl border border-slate-200/60 p-5 flex flex-col">
+            <div class="flex items-center gap-2 mb-4">
+              <div class="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center">
+                <i data-lucide="pen-tool" class="w-4 h-4 text-violet-600"></i>
+              </div>
+              <h4 class="font-display font-bold text-sm text-navy-700">Nota médica (SOAP)</h4>
+            </div>
+            <div class="space-y-3 flex-1">
+              <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Subjetivo</label>
+                <textarea class="w-full mt-1 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-navy-200 focus:border-navy-300 transition-all" rows="2" placeholder="Motivo de consulta y síntomas referidos...">Paciente refiere dolor abdominal difuso de 3 días de evolución, intensidad 6/10.</textarea>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Objetivo</label>
+                <textarea class="w-full mt-1 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-navy-200 focus:border-navy-300 transition-all" rows="2" placeholder="Hallazgos de la exploración física...">Abdomen blando, depresible. Dolor a palpación en FID. McBurney negativo. Peristaltismo normal.</textarea>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Análisis</label>
+                <textarea class="w-full mt-1 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-navy-200 focus:border-navy-300 transition-all" rows="2" placeholder="Diagnósticos y razonamiento clínico...">Dx: Dispepsia funcional. Dx Dif: SII, enfermedad ácido-péptica.</textarea>
+              </div>
+              <div>
+                <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Plan</label>
+                <textarea class="w-full mt-1 border border-slate-200 rounded-xl p-3 text-xs text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-navy-200 focus:border-navy-300 transition-all" rows="2" placeholder="Tratamiento e indicaciones...">Omeprazol 20mg c/24h x 14 días. Dieta blanda. USG abdominal. Cita en 2 semanas.</textarea>
+              </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button class="flex-1 bg-gradient-to-r from-navy-700 to-navy-500 text-white text-xs font-semibold py-2.5 rounded-xl hover:shadow-lg hover:shadow-navy-700/25 transition-all">
+                Guardar nota
+              </button>
+              <button class="px-4 bg-slate-100 text-slate-500 text-xs font-semibold py-2.5 rounded-xl hover:bg-slate-200 transition-all">
+                Firmar
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ═══ VIEW: HOSPITALIZACIÓN ═══ -->
+      <div x-show="currentView === 'hospitalizacion'" x-transition class="page-transition">
+
+        <!-- Leyenda -->
+        <div class="flex items-center gap-6 mb-6">
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-400"></span><span class="text-xs font-medium text-slate-500">Disponible</span></div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-400"></span><span class="text-xs font-medium text-slate-500">Ocupada</span></div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-amber-400"></span><span class="text-xs font-medium text-slate-500">En limpieza</span></div>
+          <div class="ml-auto bg-white rounded-xl border border-slate-200/60 px-4 py-2 flex gap-6">
+            <template x-for="s in bedSummary" :key="s.label">
+              <div class="text-center">
+                <div class="font-display text-lg font-bold" :style="'color:' + s.color" x-text="s.count"></div>
+                <div class="text-[10px] text-slate-400" x-text="s.label"></div>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Pisos -->
+        <template x-for="floor in bedFloors" :key="floor.name">
+          <div class="mb-8">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="w-8 h-8 rounded-lg bg-navy-50 flex items-center justify-center">
+                <i data-lucide="building-2" class="w-4 h-4 text-navy-600"></i>
+              </div>
+              <h3 class="font-display font-bold text-sm text-navy-700" x-text="floor.name"></h3>
+            </div>
+            <div class="grid grid-cols-6 gap-3">
+              <template x-for="bed in floor.beds" :key="bed.id">
+                <div class="bed-cell rounded-2xl p-4 border"
+                     :class="bed.status === 'libre' ? 'bg-green-50 border-green-200' : bed.status === 'ocupada' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="font-display font-bold text-sm"
+                          :class="bed.status === 'libre' ? 'text-green-700' : bed.status === 'ocupada' ? 'text-red-700' : 'text-amber-700'"
+                          x-text="bed.id"></span>
+                    <span class="w-2.5 h-2.5 rounded-full"
+                          :class="bed.status === 'libre' ? 'bg-green-400' : bed.status === 'ocupada' ? 'bg-red-400' : 'bg-amber-400'"></span>
+                  </div>
+                  <div x-show="bed.patient" class="text-[11px] font-semibold text-slate-700" x-text="bed.patient"></div>
+                  <div x-show="bed.patient" class="text-[10px] text-slate-400 mt-0.5" x-text="bed.dx"></div>
+                  <div x-show="bed.status === 'libre'" class="text-[11px] text-green-600 font-medium">Disponible</div>
+                  <div x-show="bed.status === 'limpieza'" class="text-[11px] text-amber-600 font-medium">En limpieza</div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- ═══ VIEW: FARMACIA ═══ -->
+      <div x-show="currentView === 'farmacia'" x-transition class="page-transition">
+
+        <!-- Stats farmacia -->
+        <div class="grid grid-cols-4 gap-5 mb-8">
+          <template x-for="fs in pharmaStats" :key="fs.label">
+            <div class="stat-card bg-white rounded-2xl p-5 border border-slate-200/60">
+              <div class="flex items-center gap-3 mb-3">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center" :style="'background:' + fs.bg">
+                  <i :data-lucide="fs.icon" class="w-5 h-5" :style="'color:' + fs.color"></i>
+                </div>
+                <div class="text-xs text-slate-400 font-medium" x-text="fs.label"></div>
+              </div>
+              <div class="font-display text-2xl font-bold text-navy-700" x-text="fs.value"></div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Tabla inventario -->
+        <div class="bg-white rounded-2xl border border-slate-200/60 overflow-hidden">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <h3 class="font-display font-bold text-navy-700 text-sm">Inventario farmacológico</h3>
+            <button class="text-xs font-semibold text-white bg-navy-700 hover:bg-navy-600 px-4 py-2 rounded-xl transition-all">+ Nuevo ingreso</button>
+          </div>
+          <table class="w-full">
+            <thead>
+              <tr class="text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                <th class="px-6 py-3">Medicamento</th>
+                <th class="px-6 py-3">Lote</th>
+                <th class="px-6 py-3">Caducidad</th>
+                <th class="px-6 py-3">Stock</th>
+                <th class="px-6 py-3">Estado</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <template x-for="med in medications" :key="med.name">
+                <tr class="table-row-hover">
+                  <td class="px-6 py-3.5">
+                    <div class="text-sm font-semibold text-navy-700" x-text="med.name"></div>
+                    <div class="text-[11px] text-slate-400" x-text="med.form"></div>
+                  </td>
+                  <td class="px-6 py-3.5 text-xs text-slate-500 font-mono" x-text="med.lot"></td>
+                  <td class="px-6 py-3.5 text-xs text-slate-500" x-text="med.expiry"></td>
+                  <td class="px-6 py-3.5">
+                    <div class="flex items-center gap-2">
+                      <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full" :style="'width:' + med.stockPct + '%;background:' + (med.stockPct < 20 ? '#ef4444' : med.stockPct < 50 ? '#f59e0b' : '#10b981')"></div>
+                      </div>
+                      <span class="text-xs font-semibold text-slate-600" x-text="med.stock + ' uds'"></span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-3.5">
+                    <span class="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                          :class="med.status === 'OK' ? 'bg-green-50 text-green-600' : med.status === 'Bajo' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'"
+                          x-text="med.status"></span>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║                 ALPINE.JS APP                              ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<script>
+function hospitalApp() {
+  const today = new Date();
+  const formatted = today.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  return {
+    showWelcome: true,
+    welcomeStep: 0,
+    currentView: 'dashboard',
+    todayFormatted: formatted.charAt(0).toUpperCase() + formatted.slice(1),
+
+    get viewTitle() {
+      const map = { dashboard: 'Dashboard', expedientes: 'Expediente clínico', hospitalizacion: 'Control de hospitalización', farmacia: 'Farmacia e inventario' };
+      return map[this.currentView] || 'Dashboard';
+    },
+
+    navItems: [
+      { id: 'dashboard',        icon: 'layout-dashboard', label: 'Dashboard',        badge: '' },
+      { id: 'expedientes',      icon: 'file-heart',       label: 'Expedientes',      badge: '3' },
+      { id: 'hospitalizacion',  icon: 'bed-double',       label: 'Hospitalización',  badge: '' },
+      { id: 'farmacia',         icon: 'pill',             label: 'Farmacia',         badge: '5' },
+    ],
+
+    stats: [
+      { label: 'Camas disponibles',  value: '24',       icon: 'bed-double',  bg: '#e6fff5', color: '#00994d', trend: 8 },
+      { label: 'Pacientes activos',  value: '156',      icon: 'users',       bg: '#e8f0fb', color: '#002D5A', trend: 12 },
+      { label: 'Consultas hoy',      value: '38',       icon: 'stethoscope', bg: '#fef3c7', color: '#d97706', trend: -3 },
+      { label: 'Ingresos del mes',   value: '$1.2M',    icon: 'trending-up', bg: '#ecfdf5', color: '#059669', trend: 15 },
+    ],
+
+    citas: [
+      { nombre: 'María García López',  initials: 'MG', avatar: '#4480d4', exp: '20250134', hora: '09:00', especialidad: 'Medicina Interna', medico: 'Dr. V. Cruz', estado: 'Atendido' },
+      { nombre: 'Carlos Mendoza Ríos', initials: 'CM', avatar: '#00b36b', exp: '20250089', hora: '09:30', especialidad: 'Cardiología',      medico: 'Dra. L. Orozco', estado: 'En sala' },
+      { nombre: 'Ana Belén Torres',    initials: 'AT', avatar: '#e64328', exp: '20250201', hora: '10:00', especialidad: 'Ginecología',       medico: 'Dr. R. Nava',   estado: 'Pendiente' },
+      { nombre: 'Roberto Juárez Vega', initials: 'RJ', avatar: '#7c3aed', exp: '20250178', hora: '10:30', especialidad: 'Traumatología',     medico: 'Dr. V. Cruz',    estado: 'Pendiente' },
+      { nombre: 'Luisa Fernanda Ortiz',initials: 'LO', avatar: '#0891b2', exp: '20250215', hora: '11:00', especialidad: 'Dermatología',      medico: 'Dra. P. Ramos',  estado: 'Pendiente' },
+      { nombre: 'Fernando Díaz Castro',initials: 'FD', avatar: '#b45309', exp: '20250190', hora: '11:30', especialidad: 'Urología',          medico: 'Dr. M. Suárez',  estado: 'Pendiente' },
+    ],
+
+    vitals: [
+      { label: 'Presión arterial', unit: 'mmHg',    icon: 'heart',          value: '128/82', status: 'Normal',   bg: '#fce7f3', color: '#db2777', valueColor: '#be185d' },
+      { label: 'Frec. cardíaca',   unit: 'lpm',     icon: 'activity',       value: '76',     status: 'Normal',   bg: '#dbeafe', color: '#2563eb', valueColor: '#1d4ed8' },
+      { label: 'Temperatura',      unit: '°C',      icon: 'thermometer',    value: '36.8',   status: 'Normal',   bg: '#fef3c7', color: '#d97706', valueColor: '#b45309' },
+      { label: 'Sat. O₂',         unit: '%',       icon: 'wind',           value: '97',     status: 'Normal',   bg: '#dcfce7', color: '#16a34a', valueColor: '#15803d' },
+      { label: 'Frec. respiratoria',unit: 'rpm',    icon: 'waves',          value: '18',     status: 'Normal',   bg: '#e0e7ff', color: '#4f46e5', valueColor: '#4338ca' },
+      { label: 'Glucosa',          unit: 'mg/dL',   icon: 'droplets',       value: '118',    status: 'Elevada',  bg: '#fef9c3', color: '#ca8a04', valueColor: '#a16207' },
+      { label: 'Peso',             unit: 'kg',      icon: 'scale',          value: '68.5',   status: 'Normal',   bg: '#f3e8ff', color: '#9333ea', valueColor: '#7e22ce' },
+    ],
+
+    bedSummary: [
+      { label: 'Disponibles', count: 24, color: '#16a34a' },
+      { label: 'Ocupadas',    count: 28, color: '#dc2626' },
+      { label: 'Limpieza',    count: 4,  color: '#d97706' },
+      { label: 'Total',       count: 56, color: '#002D5A' },
+    ],
+
+    bedFloors: [
+      {
+        name: 'Piso 2 — Medicina Interna',
+        beds: [
+          { id: '2-A01', status: 'ocupada',  patient: 'J. Martínez',  dx: 'DM2 descomp.' },
+          { id: '2-A02', status: 'ocupada',  patient: 'R. López',     dx: 'Neumonía' },
+          { id: '2-A03', status: 'libre',    patient: null, dx: null },
+          { id: '2-A04', status: 'ocupada',  patient: 'S. Hernández', dx: 'ICC Clase III' },
+          { id: '2-A05', status: 'limpieza', patient: null, dx: null },
+          { id: '2-A06', status: 'libre',    patient: null, dx: null },
+          { id: '2-B01', status: 'ocupada',  patient: 'M. Ramírez',   dx: 'EVC isquémico' },
+          { id: '2-B02', status: 'libre',    patient: null, dx: null },
+          { id: '2-B03', status: 'ocupada',  patient: 'F. Díaz',      dx: 'EPOC exac.' },
+          { id: '2-B04', status: 'ocupada',  patient: 'L. Torres',    dx: 'Pielonefritis' },
+          { id: '2-B05', status: 'libre',    patient: null, dx: null },
+          { id: '2-B06', status: 'ocupada',  patient: 'A. Vargas',    dx: 'Cirrosis hep.' },
+        ]
+      },
+      {
+        name: 'Piso 3 — Cirugía General',
+        beds: [
+          { id: '3-A01', status: 'ocupada',  patient: 'P. Sánchez',   dx: 'PO colecist.' },
+          { id: '3-A02', status: 'ocupada',  patient: 'G. Flores',    dx: 'PO hernioplastía' },
+          { id: '3-A03', status: 'limpieza', patient: null, dx: null },
+          { id: '3-A04', status: 'libre',    patient: null, dx: null },
+          { id: '3-A05', status: 'libre',    patient: null, dx: null },
+          { id: '3-A06', status: 'ocupada',  patient: 'E. Méndez',    dx: 'Apendicectomía' },
+          { id: '3-B01', status: 'ocupada',  patient: 'C. Ortega',    dx: 'PO tiroidect.' },
+          { id: '3-B02', status: 'libre',    patient: null, dx: null },
+          { id: '3-B03', status: 'libre',    patient: null, dx: null },
+          { id: '3-B04', status: 'ocupada',  patient: 'H. Pineda',    dx: 'Obst. intestinal' },
+          { id: '3-B05', status: 'limpieza', patient: null, dx: null },
+          { id: '3-B06', status: 'libre',    patient: null, dx: null },
+        ]
+      },
+    ],
+
+    pharmaStats: [
+      { label: 'Total SKUs',       value: '1,842',  icon: 'package',      bg: '#e8f0fb', color: '#002D5A' },
+      { label: 'Stock bajo',       value: '23',     icon: 'alert-circle', bg: '#fef3c7', color: '#d97706' },
+      { label: 'Próx. a vencer',   value: '8',      icon: 'clock',        bg: '#fee2e2', color: '#dc2626' },
+      { label: 'Despachos hoy',    value: '67',     icon: 'send',         bg: '#dcfce7', color: '#16a34a' },
+    ],
+
+    medications: [
+      { name: 'Omeprazol',         form: 'Cáps. 20mg',         lot: 'LOT-20250412A', expiry: '03/2027', stock: 450,  stockPct: 75,  status: 'OK' },
+      { name: 'Metformina',        form: 'Tab. 850mg',         lot: 'LOT-20250318B', expiry: '11/2026', stock: 320,  stockPct: 53,  status: 'OK' },
+      { name: 'Amoxicilina',       form: 'Cáps. 500mg',        lot: 'LOT-20250201C', expiry: '06/2026', stock: 85,   stockPct: 14,  status: 'Crítico' },
+      { name: 'Losartán',          form: 'Tab. 50mg',          lot: 'LOT-20250405D', expiry: '09/2027', stock: 210,  stockPct: 42,  status: 'Bajo' },
+      { name: 'Paracetamol',       form: 'Tab. 500mg',         lot: 'LOT-20250310E', expiry: '12/2026', stock: 1200, stockPct: 95,  status: 'OK' },
+      { name: 'Ketorolaco',        form: 'Amp. 30mg/mL',       lot: 'LOT-20250115F', expiry: '01/2026', stock: 45,   stockPct: 18,  status: 'Crítico' },
+      { name: 'Ciprofloxacino',    form: 'Tab. 500mg',         lot: 'LOT-20250228G', expiry: '08/2026', stock: 160,  stockPct: 32,  status: 'Bajo' },
+      { name: 'Insulina Glargina', form: 'Pluma 100UI/mL',     lot: 'LOT-20250322H', expiry: '07/2026', stock: 90,   stockPct: 36,  status: 'Bajo' },
+    ],
+
+    startWelcome() {
+      this.showWelcome = true;
+      this.welcomeStep = 1;
+      setTimeout(() => { this.welcomeStep = 2; }, 2200);
+      setTimeout(() => { this.showWelcome = false; }, 4400);
+      setTimeout(() => { lucide.createIcons(); }, 4500);
+    },
+
+    init() {
+      this.$watch('currentView', () => {
+        this.$nextTick(() => { lucide.createIcons(); });
+      });
+    }
+  };
+}
+</script>
+
+</body>
+</html>
